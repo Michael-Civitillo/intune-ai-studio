@@ -1,0 +1,37 @@
+import axios from 'axios'
+
+const api = axios.create({ baseURL: '/api' })
+
+// ── Setup ─────────────────────────────────────────────────────────────────────
+
+export const getSetupStatus = () => api.get('/setup/status').then(r => r.data)
+export const validateSetup = (client_id: string, tenant_id: string) =>
+  api.post('/setup/validate', { client_id, tenant_id }).then(r => r.data)
+export const saveSetup = (client_id: string, tenant_id: string) =>
+  api.post('/setup/save', { client_id, tenant_id }).then(r => r.data)
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+export const startAuth = () => api.post('/auth/start').then(r => r.data)
+export const pollAuth = () => api.get('/auth/poll').then(r => r.data)
+export const getMe = () => api.get('/auth/me').then(r => r.data)
+export const getPermissions = () => api.get('/auth/permissions').then(r => r.data)
+export const logout = () => api.post('/auth/logout').then(r => r.data)
+
+// ── Groups ────────────────────────────────────────────────────────────────────
+
+export const searchGroups = (q: string) =>
+  api.get('/groups/search', { params: { q } }).then(r => r.data)
+export const getGroup = (id: string) => api.get(`/groups/${id}`).then(r => r.data)
+export const getGroupMembers = (id: string) =>
+  api.get(`/groups/${id}/members`).then(r => r.data)
+export const getGroupAudit = (id: string) =>
+  api.get(`/groups/${id}/audit`).then(r => r.data)
+
+export const exportMembersUrl = (id: string) => `/api/groups/${id}/members/export`
+export const exportAuditUrl = (id: string) => `/api/groups/${id}/audit/export`
+
+// ── Devices ───────────────────────────────────────────────────────────────────
+
+export const bulkAddDevices = (group_id: string, device_names: string[]) =>
+  api.post('/devices/bulk-add', { group_id, device_names }).then(r => r.data)
