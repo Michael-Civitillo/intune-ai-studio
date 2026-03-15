@@ -2,6 +2,23 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api' })
 
+// Surface FastAPI's `detail` field as the error message so all pages
+// show the real reason instead of the generic "Request failed with status 500".
+api.interceptors.response.use(
+  r => r,
+  err => {
+    const detail = err.response?.data?.detail
+    if (detail) {
+      err.message = typeof detail === 'string' ? detail : JSON.stringify(detail)
+    }
+    return Promise.reject(err)
+  }
+)
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+export const getDashboard = () => api.get('/dashboard').then(r => r.data)
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
 export const getSetupStatus = () => api.get('/setup/status').then(r => r.data)
@@ -35,3 +52,6 @@ export const exportAuditUrl = (id: string) => `/api/groups/${id}/audit/export`
 
 export const bulkAddDevices = (group_id: string, device_names: string[]) =>
   api.post('/devices/bulk-add', { group_id, device_names }).then(r => r.data)
+
+export const syncGroupDevices = (group_id: string) =>
+  api.post(`/groups/${group_id}/sync`).then(r => r.data)

@@ -167,7 +167,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Logo */}
           <div className="text-center mb-7">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-700">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-700 to-purple-900">
               <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
               </svg>
@@ -210,7 +210,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
               <button
                 onClick={handleSignIn}
                 disabled={authStep === 'device_code'}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-violet-800 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-900 transition-colors disabled:opacity-60"
               >
                 {authStep === 'device_code' ? (
                   <>
@@ -235,7 +235,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
               <div>
                 <p className="text-sm text-gray-600 mb-3">Open the link below and enter the code:</p>
                 <a href={deviceCode.verification_uri} target="_blank" rel="noreferrer"
-                  className="inline-block text-fuchsia-400 underline text-sm font-medium mb-4">
+                  className="inline-block text-violet-400 underline text-sm font-medium mb-4">
                   {deviceCode.verification_uri}
                 </a>
                 <div className="rounded-xl bg-violet-50 border-2 border-violet-300 px-6 py-4">
@@ -244,7 +244,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
                 </div>
               </div>
               <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-fuchsia-500 border-t-transparent" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
                 <span>Waiting for sign-in… expires in {countdownStr}</span>
               </div>
               <button
@@ -272,7 +272,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
                         <div className="h-3.5 w-3.5 rounded-full border-2 border-gray-200" />
                       )}
                       {row.state === 'checking' && (
-                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-fuchsia-500 border-t-transparent" />
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
                       )}
                       {row.state === 'done' && row.granted && (
                         <svg className="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -370,7 +370,7 @@ export default function AuthPage({ onAuthenticated }: Props) {
                 <button
                   onClick={handleContinue}
                   className={`rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors flex-1 ${
-                    allGranted ? 'bg-violet-600 hover:bg-violet-700' : 'bg-gray-600 hover:bg-gray-700'
+                    allGranted ? 'bg-violet-800 hover:bg-violet-900' : 'bg-gray-600 hover:bg-gray-700'
                   }`}
                 >
                   {allGranted ? "You're all set — Enter app →" : 'Continue anyway →'}

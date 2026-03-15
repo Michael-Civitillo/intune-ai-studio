@@ -108,6 +108,17 @@ def auth_logout():
     return {"logged_out": True}
 
 
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/dashboard")
+async def dashboard():
+    token = require_token()
+    try:
+        return await graph.get_dashboard_data(token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Groups ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/groups/search")
@@ -179,6 +190,32 @@ async def group_audit_export(group_id: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Force Sync ────────────────────────────────────────────────────────────────
+
+@app.post("/api/groups/{group_id}/sync")
+async def group_sync(group_id: str):
+    token = require_token()
+    try:
+        result = await graph.sync_group_devices(token, group_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/groups/{group_id}/sync/stream")
+async def group_sync_stream(group_id: str):
+    """SSE endpoint — streams per-device sync progress."""
+    token = require_token()
+    return StreamingResponse(
+        graph.sync_group_devices_stream(token, group_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ── Devices / Bulk Add ────────────────────────────────────────────────────────
