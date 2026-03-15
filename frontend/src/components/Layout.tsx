@@ -50,13 +50,17 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
   const [showPermissions, setShowPermissions] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [loadingPerms, setLoadingPerms] = useState(false)
+  const [permError, setPermError] = useState('')
 
   async function handleShowPermissions() {
     setShowPermissions(true)
     setLoadingPerms(true)
+    setPermError('')
     try {
       const data = await getPermissions()
       setPermissions(data)
+    } catch (e: unknown) {
+      setPermError(e instanceof Error ? e.message : 'Failed to load permissions')
     } finally {
       setLoadingPerms(false)
     }
@@ -147,6 +151,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
         <PermissionsPanel
           permissions={permissions}
           loading={loadingPerms}
+          error={permError}
           onClose={() => setShowPermissions(false)}
         />
       )}

@@ -75,20 +75,31 @@ def auth_start():
 
 @app.get("/api/auth/poll")
 def auth_poll():
-    return auth.poll_device_flow()
+    try:
+        return auth.poll_device_flow()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/auth/me")
 def auth_me():
-    user = auth.get_current_user()
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+    try:
+        user = auth.get_current_user()
+        if not user:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/auth/permissions")
 def auth_permissions():
-    return auth.get_permission_status()
+    try:
+        return auth.get_permission_status()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/api/auth/logout")
