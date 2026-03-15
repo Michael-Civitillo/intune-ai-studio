@@ -204,6 +204,20 @@ async def group_sync(group_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/groups/{group_id}/sync/stream")
+async def group_sync_stream(group_id: str):
+    """SSE endpoint — streams per-device sync progress."""
+    token = require_token()
+    return StreamingResponse(
+        graph.sync_group_devices_stream(token, group_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 # ── Devices / Bulk Add ────────────────────────────────────────────────────────
 
 class BulkAddPayload(BaseModel):
