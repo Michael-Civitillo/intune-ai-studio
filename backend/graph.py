@@ -404,8 +404,8 @@ async def sync_group_devices_stream(token: str, group_id: str) -> AsyncIterator[
             })
 
         # Filter to device objects only — @odata.type is returned automatically even without $select,
-    # but fall back to checking for deviceId presence (only device objects have it)
-    devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device" or m.get("deviceId")]
+        # but fall back to checking for deviceId presence (only device objects have it)
+        devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device" or m.get("deviceId")]
 
         if not devices:
             yield _sse({"type": "devices_found", "total": 0, "devices": []})
