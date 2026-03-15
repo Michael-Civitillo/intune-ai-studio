@@ -108,7 +108,14 @@ def poll_device_flow() -> dict:
     if not flow:
         return {"status": "no_flow"}
     app = get_msal_app()
-    result = app.acquire_token_by_device_flow(flow, exit_condition=lambda f: f.get("_condition_timestamp", time.time()) > time.time())
+    if not app:
+        return {"status": "error", "message": "App not configured"}
+    try:
+        # exit_condition=lambda f: True makes MSAL do one poll and return immediately
+        # instead of blocking for the entire 15-minute flow lifetime.
+        result = app.acquire_token_by_device_flow(flow, exit_condition=lambda f: True)
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
     if "access_token" in result:
         with _lock:
             _token_cache = result
@@ -121,23 +128,10 @@ def poll_device_flow() -> dict:
 
 
 def get_token() -> Optional[str]:
+    """Return the cached access token. Tokens are valid for ~1 hour after sign-in.
+    If the token has expired, the user can sign out and sign back in."""
     with _lock:
-        cache = _token_cache.copy()
-    if not cache:
-        return None
-    # Try silent refresh
-    app = get_msal_app()
-    if not app:
-        return None
-    accounts = app.get_accounts()
-    if accounts:
-        scopes = [f"https://graph.microsoft.com/{s}" for s in REQUIRED_SCOPES]
-        result = app.acquire_token_silent(scopes, account=accounts[0])
-        if result and "access_token" in result:
-            with _lock:
-                _token_cache = result
-            return result["access_token"]
-    return cache.get("access_token")
+        return _token_cache.get("access_token")
 
 
 def get_current_user() -> Optional[dict]:
@@ -145,7 +139,7 @@ def get_current_user() -> Optional[dict]:
         cache = _token_cache.copy()
     if not cache:
         return None
-    id_claims = cache.get("id_token_claims", {})
+    id_claims = cache.get("id_token_claims") or {}
     return {
         "name": id_claims.get("name", id_claims.get("preferred_username", "Unknown")),
         "upn": id_claims.get("preferred_username", ""),

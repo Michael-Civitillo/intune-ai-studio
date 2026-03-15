@@ -136,52 +136,88 @@ export default function BulkAddPage() {
         </div>
       </div>
 
-      {/* Preview + submit */}
-      {deviceNames.length > 0 && selectedGroup && !result && (
+      {/* Preview + submit — always visible, button disabled until both steps complete */}
+      {!result && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">3</span>
             Preview & submit
           </h2>
-          <div className="mb-4 rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 text-sm text-violet-800">
-            Adding <strong>{deviceNames.length} device{deviceNames.length > 1 ? 's' : ''}</strong> to <strong>{selectedGroup.displayName}</strong>.
-            Devices not found in Entra will be skipped.
-          </div>
-          <div className="max-h-40 overflow-y-auto mb-4">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="py-1.5 text-left text-gray-500 font-medium">Device Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deviceNames.slice(0, 50).map((name, i) => (
-                  <tr key={i} className="border-b border-gray-50">
-                    <td className="py-1 font-mono text-gray-700">{name}</td>
-                  </tr>
-                ))}
-                {deviceNames.length > 50 && (
-                  <tr>
-                    <td className="py-1 text-gray-400">...and {deviceNames.length - 50} more</td>
-                  </tr>
+
+          {/* Checklist when steps aren't complete yet */}
+          {(!selectedGroup || deviceNames.length === 0) && (
+            <div className="mb-4 space-y-2">
+              <div className={`flex items-center gap-2 text-sm ${selectedGroup ? 'text-green-700' : 'text-gray-400'}`}>
+                {selectedGroup ? (
+                  <svg className="h-4 w-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
                 )}
-              </tbody>
-            </table>
-          </div>
+                {selectedGroup ? `Group selected: ${selectedGroup.displayName}` : 'Select a target group above'}
+              </div>
+              <div className={`flex items-center gap-2 text-sm ${deviceNames.length > 0 ? 'text-green-700' : 'text-gray-400'}`}>
+                {deviceNames.length > 0 ? (
+                  <svg className="h-4 w-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                )}
+                {deviceNames.length > 0 ? `${deviceNames.length} device${deviceNames.length > 1 ? 's' : ''} entered` : 'Enter or upload device names above'}
+              </div>
+            </div>
+          )}
+
+          {/* Preview table — shown when both are ready */}
+          {selectedGroup && deviceNames.length > 0 && (
+            <>
+              <div className="mb-4 rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 text-sm text-violet-800">
+                Adding <strong>{deviceNames.length} device{deviceNames.length > 1 ? 's' : ''}</strong> to <strong>{selectedGroup.displayName}</strong>.
+                Devices not found in Entra will be skipped.
+              </div>
+              <div className="max-h-40 overflow-y-auto mb-4">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="py-1.5 text-left text-gray-500 font-medium">Device Name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deviceNames.slice(0, 50).map((name, i) => (
+                      <tr key={i} className="border-b border-gray-50">
+                        <td className="py-1 font-mono text-gray-700">{name}</td>
+                      </tr>
+                    ))}
+                    {deviceNames.length > 50 && (
+                      <tr>
+                        <td className="py-1 text-gray-400">...and {deviceNames.length - 50} more</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
           {error && (
             <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">{error}</div>
           )}
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
+            disabled={loading || !selectedGroup || deviceNames.length === 0}
+            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Processing {deviceNames.length} devices...
               </span>
-            ) : `Add ${deviceNames.length} Device${deviceNames.length > 1 ? 's' : ''} to Group`}
+            ) : (selectedGroup && deviceNames.length > 0)
+              ? `Add ${deviceNames.length} Device${deviceNames.length > 1 ? 's' : ''} to Group`
+              : 'Add Devices to Group'
+            }
           </button>
         </div>
       )}

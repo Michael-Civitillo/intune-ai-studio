@@ -7,10 +7,11 @@ interface Permission {
 interface Props {
   permissions: Permission[]
   loading: boolean
+  error?: string
   onClose: () => void
 }
 
-export default function PermissionsPanel({ permissions, loading, onClose }: Props) {
+export default function PermissionsPanel({ permissions, loading, error, onClose }: Props) {
   const allGranted = permissions.length > 0 && permissions.every(p => p.granted)
   const missingCount = permissions.filter(p => !p.granted).length
 
@@ -38,6 +39,17 @@ export default function PermissionsPanel({ permissions, loading, onClose }: Prop
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+            </div>
+          ) : error ? (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+              <p className="text-sm text-red-800 font-medium">Failed to load permissions</p>
+              <p className="text-xs text-red-700 mt-1">{error}</p>
+              <p className="text-xs text-red-600 mt-2">Make sure the backend is running and you are signed in.</p>
+            </div>
+          ) : permissions.length === 0 ? (
+            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-6 text-center">
+              <p className="text-sm text-gray-500">No permission data available.</p>
+              <p className="text-xs text-gray-400 mt-1">Sign in first, then re-open this panel.</p>
             </div>
           ) : (
             <>
