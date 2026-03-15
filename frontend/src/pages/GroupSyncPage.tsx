@@ -211,6 +211,17 @@ function SyncModal({
             </div>
           )}
 
+          {/* No devices found */}
+          {phase === 'done' && devices.length === 0 && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-4 text-sm text-amber-800">
+              <p className="font-semibold mb-1">⚠️ No devices found in this group</p>
+              <p className="text-amber-700">
+                This group either has no members, or all members are Entra-only objects (users/service principals)
+                not enrolled in Intune. If you expected devices here, they may have been cleaned up or never enrolled.
+              </p>
+            </div>
+          )}
+
           {/* Summary cards */}
           {summary && phase === 'done' && (
             <div className="grid grid-cols-3 gap-3">
@@ -233,6 +244,17 @@ function SyncModal({
           {summary && phase === 'done' && summary.synced === summary.total && summary.total > 0 && (
             <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-4 py-2 text-sm text-green-800 text-center">
               🎉 All {summary.total} devices synced successfully!
+            </div>
+          )}
+
+          {/* All stale / not enrolled warning */}
+          {summary && phase === 'done' && summary.not_managed === summary.total && summary.total > 0 && (
+            <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+              <p className="font-semibold mb-1">⚠️ No Intune-managed devices found</p>
+              <p className="text-amber-700">
+                All {summary.total} device{summary.total !== 1 ? 's' : ''} in this group exist in Entra but are not
+                enrolled in Intune. They may be stale records — consider reviewing the group membership.
+              </p>
             </div>
           )}
         </div>

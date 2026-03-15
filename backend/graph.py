@@ -95,7 +95,7 @@ async def get_group(token: str, group_id: str) -> dict:
 async def get_group_members(token: str, group_id: str) -> list[dict]:
     async with httpx.AsyncClient() as client:
         members = await _get_paged(client, token, f"{GRAPH_BASE}/groups/{group_id}/members", {
-            "$select": "id,displayName,deviceId,operatingSystem,operatingSystemVersion,@odata.type",
+            "$select": "id,displayName,deviceId,operatingSystem,operatingSystemVersion",
             "$top": "999",
         })
     return members
@@ -271,11 +271,13 @@ async def sync_group_devices(token: str, group_id: str) -> dict:
     """
     async with httpx.AsyncClient(timeout=120.0) as client:
         members = await _get_paged(client, token, f"{GRAPH_BASE}/groups/{group_id}/members", {
-            "$select": "id,displayName,deviceId,operatingSystem,@odata.type",
+            "$select": "id,displayName,deviceId,operatingSystem",
             "$top": "999",
         })
 
-    devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device"]
+    # Filter to device objects only — @odata.type is returned automatically even without $select,
+    # but fall back to checking for deviceId presence (only device objects have it)
+    devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device" or m.get("deviceId")]
     if not devices:
         return {"results": [], "summary": {"total": 0, "synced": 0, "not_managed": 0, "errors": 0}}
 
@@ -397,11 +399,13 @@ async def sync_group_devices_stream(token: str, group_id: str) -> AsyncIterator[
 
         async with httpx.AsyncClient(timeout=120.0) as client:
             members = await _get_paged(client, token, f"{GRAPH_BASE}/groups/{group_id}/members", {
-                "$select": "id,displayName,deviceId,operatingSystem,@odata.type",
+                "$select": "id,displayName,deviceId,operatingSystem",
                 "$top": "999",
             })
 
-        devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device"]
+        # Filter to device objects only — @odata.type is returned automatically even without $select,
+    # but fall back to checking for deviceId presence (only device objects have it)
+    devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device" or m.get("deviceId")]
 
         if not devices:
             yield _sse({"type": "devices_found", "total": 0, "devices": []})
