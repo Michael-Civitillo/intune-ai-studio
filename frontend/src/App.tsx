@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage'
 import BulkAddPage from './pages/BulkAddPage'
 import GroupAuditPage from './pages/GroupAuditPage'
 import GroupMembersPage from './pages/GroupMembersPage'
+import GroupSyncPage from './pages/GroupSyncPage'
 import SetupWizard from './pages/SetupWizard'
 
 type AppState = 'loading' | 'setup' | 'auth' | 'ready'
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="/bulk-add" element={<BulkAddPage />} />
           <Route path="/group-audit" element={<GroupAuditPage />} />
           <Route path="/group-members" element={<GroupMembersPage />} />
+          <Route path="/group-sync" element={<GroupSyncPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

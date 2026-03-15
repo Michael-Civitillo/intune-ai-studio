@@ -181,6 +181,18 @@ async def group_audit_export(group_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── Force Sync ────────────────────────────────────────────────────────────────
+
+@app.post("/api/groups/{group_id}/sync")
+async def group_sync(group_id: str):
+    token = require_token()
+    try:
+        result = await graph.sync_group_devices(token, group_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Devices / Bulk Add ────────────────────────────────────────────────────────
 
 class BulkAddPayload(BaseModel):

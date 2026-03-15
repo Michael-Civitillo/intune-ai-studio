@@ -224,6 +224,114 @@ def audit_to_csv(audit_data: dict, group_name: str) -> str:
     return output.getvalue()
 
 
+# ── Force Sync ────────────────────────────────────────────────────────────────
+
+async def sync_group_devices(token: str, group_id: str) -> dict:
+    """
+    Trigger an immediate Intune sync for all managed devices in a group.
+    Steps:
+      1. Fetch all device-type members from the group
+      2. Batch-resolve azureADDeviceId → Intune managedDevice ID
+      3. Batch-trigger POST /managedDevices/{id}/syncDevice
+      4. Return per-device results + summary
+    """
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        members = await _get_paged(client, token, f"{GRAPH_BASE}/groups/{group_id}/members", {
+            "$select": "id,displayName,deviceId,operatingSystem,@odata.type",
+            "$top": "999",
+        })
+
+    devices = [m for m in members if m.get("@odata.type") == "#microsoft.graph.device"]
+    if not devices:
+        return {"results": [], "summary": {"total": 0, "synced": 0, "not_managed": 0, "errors": 0}}
+
+    # ── Phase 1: resolve azureADDeviceId → managed device ID ──────────────────
+
+    async def lookup_batch(batch: list[dict]) -> dict[str, str]:
+        """Returns {entra_object_id: managed_device_id} for found devices."""
+        reqs = [
+            {"id": str(i), "method": "GET",
+             "url": f"/deviceManagement/managedDevices?$filter=azureADDeviceId eq '{dev.get('deviceId','')}'&$select=id&$top=1"}
+            for i, dev in enumerate(batch) if dev.get("deviceId")
+        ]
+        if not reqs:
+            return {}
+        async with httpx.AsyncClient() as c:
+            r = await c.post(f"{GRAPH_BASE}/$batch", headers=_headers(token), json={"requests": reqs})
+            r.raise_for_status()
+        found: dict[str, str] = {}
+        for resp in r.json().get("responses", []):
+            idx = int(resp["id"])
+            vals = resp.get("body", {}).get("value", [])
+            if vals:
+                found[batch[idx]["id"]] = vals[0]["id"]
+        return found
+
+    lookup_chunks = [devices[i:i + 20] for i in range(0, len(devices), 20)]
+    lookup_results = await asyncio.gather(*[lookup_batch(chunk) for chunk in lookup_chunks])
+    managed_map: dict[str, str] = {}
+    for r in lookup_results:
+        managed_map.update(r)
+
+    # ── Phase 2: trigger syncDevice for each managed device ───────────────────
+
+    to_sync = [(dev["id"], managed_map[dev["id"]]) for dev in devices if dev["id"] in managed_map]
+
+    async def sync_batch(batch: list[tuple[str, str]]) -> dict[str, str]:
+        """Returns {entra_id: "ok" | "error: <msg>"} for each device."""
+        reqs = [
+            {"id": str(i), "method": "POST",
+             "url": f"/deviceManagement/managedDevices/{mid}/syncDevice",
+             "body": {}, "headers": {"Content-Type": "application/json"}}
+            for i, (_, mid) in enumerate(batch)
+        ]
+        async with httpx.AsyncClient() as c:
+            r = await c.post(f"{GRAPH_BASE}/$batch", headers=_headers(token), json={"requests": reqs})
+            r.raise_for_status()
+        result: dict[str, str] = {}
+        for resp in r.json().get("responses", []):
+            idx = int(resp["id"])
+            entra_id = batch[idx][0]
+            if resp.get("status") == 204:
+                result[entra_id] = "ok"
+            else:
+                msg = resp.get("body", {}).get("error", {}).get("message", f"HTTP {resp.get('status', '?')}")
+                result[entra_id] = f"error: {msg}"
+        return result
+
+    sync_map: dict[str, str] = {}
+    if to_sync:
+        sync_chunks = [to_sync[i:i + 20] for i in range(0, len(to_sync), 20)]
+        sync_results = await asyncio.gather(*[sync_batch(chunk) for chunk in sync_chunks])
+        for r in sync_results:
+            sync_map.update(r)
+
+    # ── Build per-device results ───────────────────────────────────────────────
+
+    results = []
+    for dev in devices:
+        eid = dev["id"]
+        name = dev.get("displayName", "Unknown")
+        os_name = dev.get("operatingSystem", "")
+        if eid not in managed_map:
+            results.append({"deviceName": name, "operatingSystem": os_name,
+                            "status": "not_managed", "message": "Not enrolled in Intune"})
+        elif sync_map.get(eid, "").startswith("error"):
+            results.append({"deviceName": name, "operatingSystem": os_name,
+                            "status": "error", "message": sync_map[eid].replace("error: ", "")})
+        else:
+            results.append({"deviceName": name, "operatingSystem": os_name,
+                            "status": "synced", "message": "Sync triggered successfully"})
+
+    summary = {
+        "total": len(devices),
+        "synced": sum(1 for r in results if r["status"] == "synced"),
+        "not_managed": sum(1 for r in results if r["status"] == "not_managed"),
+        "errors": sum(1 for r in results if r["status"] == "error"),
+    }
+    return {"results": results, "summary": summary}
+
+
 def members_to_csv(members: list[dict], group_name: str) -> str:
     output = io.StringIO()
     writer = csv.writer(output)

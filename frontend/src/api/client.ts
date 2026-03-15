@@ -35,3 +35,6 @@ export const exportAuditUrl = (id: string) => `/api/groups/${id}/audit/export`
 
 export const bulkAddDevices = (group_id: string, device_names: string[]) =>
   api.post('/devices/bulk-add', { group_id, device_names }).then(r => r.data)
+
+export const syncGroupDevices = (group_id: string) =>
+  api.post(`/groups/${group_id}/sync`).then(r => r.data)
