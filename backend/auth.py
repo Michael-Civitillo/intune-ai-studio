@@ -15,6 +15,7 @@ REQUIRED_SCOPES = [
     "DeviceManagementManagedDevices.PrivilegedOperations.All",
     "Group.ReadWrite.All",
     "Directory.Read.All",
+    "ServiceHealth.Read.All",
     "User.Read",
 ]
 
@@ -25,6 +26,7 @@ SCOPE_DESCRIPTIONS = {
     "DeviceManagementManagedDevices.PrivilegedOperations.All": "Trigger force sync on Intune managed devices",
     "Group.ReadWrite.All": "Search groups and add members",
     "Directory.Read.All": "Look up Entra device objects",
+    "ServiceHealth.Read.All": "Show Microsoft service health status on the dashboard",
     "User.Read": "Display your signed-in account name",
 }
 

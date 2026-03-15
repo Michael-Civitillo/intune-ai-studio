@@ -66,6 +66,58 @@ async def get_dashboard_data(token: str) -> dict:
     }
 
 
+# ── Service Health ────────────────────────────────────────────────────────────
+
+# Services we care about — match by substring so name changes don't break us
+_HEALTH_TARGETS = ("intune", "entra", "azure active directory")
+
+
+async def get_service_health(token: str) -> dict:
+    """
+    Returns health status for Microsoft Intune and Entra (Azure AD) from the
+    Microsoft 365 service health API.  Requires ServiceHealth.Read.All.
+    Returns {"services": [...], "allOperational": bool, "permissionMissing": bool}
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            data = await _get(
+                client, token,
+                f"{GRAPH_BASE}/admin/serviceAnnouncement/healthOverviews",
+                {"$select": "id,status,service"},
+            )
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 403:
+            return {"services": [], "allOperational": None, "permissionMissing": True}
+        raise
+
+    items = data.get("value", [])
+    services = []
+    for item in items:
+        name = (item.get("service") or item.get("id") or "").strip()
+        if any(t in name.lower() for t in _HEALTH_TARGETS):
+            status = item.get("status", "unknown")
+            services.append({
+                "service": name,
+                "status": status,
+                "healthy": status == "serviceOperational",
+            })
+
+    # Deduplicate: if both "Azure Active Directory" and "Microsoft Entra" appear, keep Entra
+    seen: set[str] = set()
+    deduped = []
+    for svc in services:
+        key = "entra" if "entra" in svc["service"].lower() or "azure active directory" in svc["service"].lower() else svc["service"].lower()
+        if key not in seen:
+            seen.add(key)
+            # Normalise display name
+            if "azure active directory" in svc["service"].lower():
+                svc["service"] = "Microsoft Entra (Azure AD)"
+            deduped.append(svc)
+
+    all_operational = all(s["healthy"] for s in deduped) if deduped else None
+    return {"services": deduped, "allOperational": all_operational, "permissionMissing": False}
+
+
 # ── Auth / User ──────────────────────────────────────────────────────────────
 
 async def get_me(token: str) -> dict:

@@ -119,6 +119,17 @@ async def dashboard():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── Service Health ────────────────────────────────────────────────────────────
+
+@app.get("/api/health/services")
+async def service_health():
+    token = require_token()
+    try:
+        return await graph.get_service_health(token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Groups ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/groups/search")
