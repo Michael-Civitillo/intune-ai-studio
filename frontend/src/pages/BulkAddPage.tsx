@@ -85,7 +85,7 @@ export default function BulkAddPage() {
       {/* Step 1: Target group */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs">1</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">1</span>
           Select target group
         </h2>
         <GroupSearch
@@ -106,7 +106,7 @@ export default function BulkAddPage() {
       {/* Step 2: Device names */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs">2</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">2</span>
           Enter device names
         </h2>
         <div className="space-y-3">
@@ -128,7 +128,7 @@ export default function BulkAddPage() {
             onChange={e => handleTextChange(e.target.value)}
             rows={6}
             placeholder="DEVICE-001&#10;DEVICE-002&#10;LAPTOP-JOHN&#10;..."
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono resize-none focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
           {deviceNames.length > 0 && (
             <p className="text-xs text-gray-500">{deviceNames.length} device{deviceNames.length > 1 ? 's' : ''} ready to process</p>
@@ -140,10 +140,10 @@ export default function BulkAddPage() {
       {deviceNames.length > 0 && selectedGroup && !result && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs">3</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">3</span>
             Preview & submit
           </h2>
-          <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
+          <div className="mb-4 rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 text-sm text-violet-800">
             Adding <strong>{deviceNames.length} device{deviceNames.length > 1 ? 's' : ''}</strong> to <strong>{selectedGroup.displayName}</strong>.
             Devices not found in Entra will be skipped.
           </div>
@@ -174,7 +174,7 @@ export default function BulkAddPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
+            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -191,7 +191,7 @@ export default function BulkAddPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-900">Results</h2>
-            <button onClick={handleReset} className="text-xs text-blue-600 hover:underline">
+            <button onClick={handleReset} className="text-xs text-fuchsia-600 hover:underline">
               Start new batch
             </button>
           </div>
@@ -200,7 +200,7 @@ export default function BulkAddPage() {
           <div className="grid grid-cols-4 gap-3 mb-4">
             {[
               { label: 'Added', count: result.summary.added, color: 'text-green-700 bg-green-50' },
-              { label: 'Already Member', count: result.summary.already_member, color: 'text-blue-700 bg-blue-50' },
+              { label: 'Already Member', count: result.summary.already_member, color: 'text-violet-700 bg-violet-50' },
               { label: 'Not Found', count: result.summary.not_found, color: 'text-red-700 bg-red-50' },
               { label: 'Error', count: result.summary.error, color: 'text-orange-700 bg-orange-50' },
             ].map(s => (

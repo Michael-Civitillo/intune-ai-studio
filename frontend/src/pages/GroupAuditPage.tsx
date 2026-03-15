@@ -71,7 +71,7 @@ export default function GroupAuditPage() {
 
       {loading && (
         <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm flex flex-col items-center gap-3">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
           <p className="text-sm text-gray-500">Scanning all policies and apps...</p>
           <p className="text-xs text-gray-400">This may take 10–30 seconds for large tenants</p>
         </div>
@@ -136,14 +136,14 @@ export default function GroupAuditPage() {
                       onClick={() => setActiveTab(tab.key)}
                       className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 ${
                         activeTab === tab.key
-                          ? 'border-blue-600 text-blue-700 bg-blue-50/50'
+                          ? 'border-fuchsia-600 text-fuchsia-700 bg-fuchsia-50/50'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <span>{tab.icon}</span>
                       <span>{tab.label}</span>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        count > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                        count > 0 ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {count}
                       </span>

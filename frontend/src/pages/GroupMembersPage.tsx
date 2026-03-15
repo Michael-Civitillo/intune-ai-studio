@@ -69,7 +69,7 @@ export default function GroupMembersPage() {
 
       {loading && (
         <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm flex flex-col items-center gap-3">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
           <p className="text-sm text-gray-500">Loading group members...</p>
         </div>
       )}
@@ -125,7 +125,7 @@ export default function GroupMembersPage() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder={`Filter ${count} devices...`}
-                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
               </div>
             </div>

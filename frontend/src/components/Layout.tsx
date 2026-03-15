@@ -25,7 +25,6 @@ const navItems = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
     ),
-    description: 'Add devices to a group from a CSV',
   },
   {
     to: '/group-audit',
@@ -35,7 +34,6 @@ const navItems = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
     ),
-    description: 'See what a group is assigned to',
   },
   {
     to: '/group-members',
@@ -45,7 +43,6 @@ const navItems = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
       </svg>
     ),
-    description: 'List all devices in a group',
   },
 ]
 
@@ -76,7 +73,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-700">
             <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
             </svg>
@@ -96,7 +93,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
@@ -120,7 +117,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
           </button>
 
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex-shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-semibold flex-shrink-0">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">

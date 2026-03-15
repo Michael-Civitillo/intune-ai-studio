@@ -47,7 +47,7 @@ export default function SetupWizard({ onComplete }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 to-blue-800 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0814] to-[#1e0a38] flex items-center justify-center p-6">
       <div className="w-full max-w-lg">
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-8">
@@ -65,7 +65,7 @@ export default function SetupWizard({ onComplete }: Props) {
           {/* Step 1: Welcome */}
           {step === 1 && (
             <div className="p-8 text-center">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-700">
                 <svg className="h-9 w-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
                 </svg>
@@ -91,7 +91,7 @@ export default function SetupWizard({ onComplete }: Props) {
               </div>
               <button
                 onClick={() => setStep(2)}
-                className="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
               >
                 Let's get you set up →
               </button>
@@ -122,7 +122,7 @@ export default function SetupWizard({ onComplete }: Props) {
                   {
                     n: 1,
                     title: 'Create a new App Registration',
-                    body: <>Go to <a href="https://portal.azure.com" target="_blank" rel="noreferrer" className="text-blue-600 underline">portal.azure.com</a> → Microsoft Entra ID → App registrations → <strong>New registration</strong>. Give it any name (e.g. "Intune Admin Toolbox"). Leave the redirect URI blank.</>,
+                    body: <>Go to <a href="https://portal.azure.com" target="_blank" rel="noreferrer" className="text-fuchsia-600 underline">portal.azure.com</a> → Microsoft Entra ID → App registrations → <strong>New registration</strong>. Give it any name (e.g. "Intune Admin Toolbox"). Leave the redirect URI blank.</>,
                   },
                   {
                     n: 2,
@@ -153,7 +153,7 @@ export default function SetupWizard({ onComplete }: Props) {
                   },
                 ].map(step => (
                   <li key={step.n} className="flex gap-4">
-                    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold mt-0.5">
+                    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs font-bold mt-0.5">
                       {step.n}
                     </div>
                     <div>
@@ -173,7 +173,7 @@ export default function SetupWizard({ onComplete }: Props) {
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
                 >
                   I've done this →
                 </button>
@@ -199,7 +199,7 @@ export default function SetupWizard({ onComplete }: Props) {
                     value={clientId}
                     onChange={e => { setClientId(e.target.value); setValidated(false); setValidationError('') }}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                   />
                 </div>
                 <div>
@@ -211,7 +211,7 @@ export default function SetupWizard({ onComplete }: Props) {
                     value={tenantId}
                     onChange={e => { setTenantId(e.target.value); setValidated(false); setValidationError('') }}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-mono shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                   />
                 </div>
               </div>
@@ -242,7 +242,7 @@ export default function SetupWizard({ onComplete }: Props) {
                   <button
                     onClick={handleValidate}
                     disabled={validating}
-                    className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
+                    className="flex-1 rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
                   >
                     {validating ? (
                       <span className="flex items-center justify-center gap-2">
@@ -264,7 +264,7 @@ export default function SetupWizard({ onComplete }: Props) {
           )}
         </div>
 
-        <p className="text-center text-xs text-blue-200 mt-4">
+        <p className="text-center text-xs text-purple-200 mt-4">
           Your credentials are stored locally in backend/config.json and never leave your machine.
         </p>
       </div>
