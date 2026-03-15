@@ -1,28 +1,35 @@
-# Intune Admin Toolbox
+# 🛠️ Intune Admin Toolbox
 
-A locally hosted web app for Intune administrators. Provides a modern GUI for common day-to-day tasks that otherwise require CLI or Graph API knowledge.
+Tired of wrestling with PowerShell scripts and Graph Explorer just to do basic Intune housekeeping? Same. This is a locally hosted web app that wraps the most repetitive admin tasks in a clean UI — no CLI required.
 
-## Features
+Built by an Intune admin, for Intune admins. Use it, break it, tell me what you think.
 
-| Feature | Description |
-|---------|-------------|
-| **Bulk Device Add** | Upload a CSV of device names → automatically resolves them to Entra object IDs → batch-adds them to any group |
-| **Group Audit** | Select a group and see every config profile, compliance policy, and app assigned to it — know if it's safe to delete |
-| **Group Members** | View all devices in a group with OS breakdown; filter and export to CSV |
+> ⚠️ **Heads up:** This is a personal side project. It works well for me but comes with no guarantees, warranties, or SLAs of any kind. Test it in a non-production environment first. You're responsible for what you do with it.
 
 ---
 
-## Quick Start
+## ✨ What it does
+
+| Feature | What it saves you from |
+|---------|----------------------|
+| 🖥️ **Bulk Device Add** | Upload a CSV of device names → resolves them to Entra object IDs → adds the whole lot to a group. No more adding devices one by one. |
+| 🔍 **Group Audit** | See every config profile, compliance policy, and app assigned to a group before you delete it. No more "oops". |
+| 👥 **Group Members** | Browse all devices in a group with OS breakdown. Filter and export to CSV. |
+
+---
+
+## 🚀 Getting started
 
 ### 1. Start the backend
 
 ```bash
 cd backend
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-> Requires Python 3.11+. Use a virtual environment: `python -m venv .venv && source .venv/bin/activate`
+> Requires Python 3.11+
 
 ### 2. Start the frontend
 
@@ -32,62 +39,74 @@ npm install
 npm run dev
 ```
 
-### 3. Open the app
+### 3. Open it up
 
-Navigate to **http://localhost:5173** — the setup wizard will guide you through everything else.
-
----
-
-## First-Run Setup (in the app)
-
-The setup wizard will walk you through:
-
-1. **Registering an Entra App** — step-by-step instructions are shown in the wizard
-2. **Entering your Client ID and Tenant ID**
-3. **Signing in** with your Microsoft account (device code flow — your password never touches this app)
-4. **Verifying permissions** — a checklist shows which Graph permissions are granted
-
-### Required API Permissions (delegated)
-
-Your Entra app registration needs these Microsoft Graph delegated permissions:
-
-| Permission | Used for |
-|-----------|----------|
-| `DeviceManagementConfiguration.ReadWrite.All` | View config profiles, resolve device assignments |
-| `DeviceManagementApps.Read.All` | View app assignments in group audit |
-| `DeviceManagementManagedDevices.Read.All` | Resolve device names to IDs |
-| `Group.ReadWrite.All` | Search groups, add members |
-| `Directory.Read.All` | Look up Entra device objects |
-| `User.Read` | Display your signed-in account name |
-
-> **Important:** In your app registration → Authentication → enable **"Allow public client flows"** (required for device code flow).
+Head to **http://localhost:5173** — the setup wizard takes it from there.
 
 ---
 
-## Architecture
+## 🔧 First-time setup (in-app wizard)
+
+The wizard walks you through everything:
+
+1. **Register an Entra app** — instructions are shown step by step in the app
+2. **Paste your Client ID + Tenant ID**
+3. **Sign in** via Microsoft's device code flow — your password never touches this app
+4. **Check your permissions** — a live checklist shows exactly what's granted
+
+### Permissions you'll need (delegated)
+
+| Permission | Why |
+|-----------|-----|
+| `DeviceManagementConfiguration.ReadWrite.All` | Config profiles + adding devices to groups |
+| `DeviceManagementApps.Read.All` | App assignments in group audit |
+| `DeviceManagementManagedDevices.Read.All` | Resolving device names to IDs |
+| `Group.ReadWrite.All` | Searching groups + adding members |
+| `Directory.Read.All` | Looking up Entra device objects |
+| `User.Read` | Showing your name in the UI |
+
+> 📌 **One thing people miss:** In your app registration → Authentication, you need to enable **"Allow public client flows"**. The app will remind you if you forget, but save yourself a round trip and do it upfront.
+
+---
+
+## 🏗️ How it's built
 
 ```
 intune-admin-toolbox/
 ├── backend/
-│   ├── main.py           # FastAPI app
-│   ├── auth.py           # MSAL device code flow
-│   ├── graph.py          # All Microsoft Graph API calls
+│   ├── main.py           # FastAPI
+│   ├── auth.py           # MSAL device code flow + token cache
+│   ├── graph.py          # All Graph API calls live here
 │   ├── config.json       # Created by setup wizard (gitignored)
 │   └── requirements.txt
 └── frontend/
     └── src/
         ├── pages/        # BulkAdd, GroupAudit, GroupMembers, Auth, Setup
         ├── components/   # Layout, GroupSearch, PermissionsPanel, StatusBadge
-        └── api/          # axios client
+        └── api/          # axios wrapper
 ```
 
-The backend runs on **port 8000**, the frontend dev server on **port 5173** (proxies `/api/*` to the backend).
+Backend on **:8000**, frontend dev server on **:5173** (Vite proxies `/api/*` to the backend).
 
 ---
 
-## Security Notes
+## 🔒 A note on security
 
-- Authentication uses Microsoft's **device code flow** — your password is entered on Microsoft's servers, not here
-- Your Client ID and Tenant ID are stored in `backend/config.json` (gitignored)
-- Access tokens are held in memory only — they are cleared when the backend restarts or you sign out
-- This tool is designed for local use only; do not expose port 8000 to the internet
+- Auth uses Microsoft's **device code flow** — you authenticate on Microsoft's own servers
+- Your Client ID and Tenant ID live in `backend/config.json` (gitignored — don't commit it)
+- Tokens are in memory only and cleared on backend restart or sign-out
+- This is designed for **local use** — don't expose port 8000 to the internet
+
+---
+
+## 💬 Ideas, feedback, feature requests
+
+I'm actively using this and adding to it. If something's broken or you've got an idea for a feature that would save you time, open an issue or drop a PR — genuinely keen to hear what would make this more useful.
+
+Some things I'm thinking about:
+- 🔄 Bulk device **remove** from groups
+- 📋 Stale device report (devices not checked in for X days)
+- 🏷️ Bulk device rename / tagging
+- 🔁 Cross-group membership comparison
+
+Got something better on your wishlist? Let me know 👇
