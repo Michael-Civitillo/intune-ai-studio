@@ -12,7 +12,7 @@ Built by an Intune admin, for Intune admins. Use it, break it, tell me what you 
 
 | Feature | What it saves you from |
 |---------|----------------------|
-| 🏠 **Dashboard** | Tenant name, signed-in user, and total managed device count broken down by OS (Windows / macOS / iOS / Android) — at a glance. |
+| 🏠 **Dashboard** | Tenant name, signed-in user, total managed device count by OS, and a live Microsoft service health indicator — green when all clear, amber/red if Intune or Entra are having issues. |
 | ➕ **Bulk Device Add** | Upload a CSV of device names → resolves them to Entra object IDs → adds the whole lot to a group. No more adding devices one by one. |
 | 🔄 **Force Sync** | Trigger an immediate Intune check-in for every managed device in a group. Live animated progress window shows each device's status in real time — no more waiting for the scheduled window. |
 | 🔍 **Group Audit** | See every config profile, compliance policy, and app assigned to a group before you delete it. No more "oops". Export to CSV. |
@@ -66,6 +66,7 @@ The wizard walks you through everything:
 | `DeviceManagementManagedDevices.PrivilegedOperations.All` | Triggering force sync via `syncDevice` action |
 | `Group.ReadWrite.All` | Searching groups + adding members |
 | `Directory.Read.All` | Looking up Entra device objects |
+| `ServiceHealth.Read.All` | Live Intune / Entra service health on the dashboard |
 | `User.Read` | Showing your name in the UI |
 
 > 📌 **One thing people miss:** In your app registration → Authentication, you need to enable **"Allow public client flows"**. The app will remind you if you forget, but save yourself a round trip and do it upfront.

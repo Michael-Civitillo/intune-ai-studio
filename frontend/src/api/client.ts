@@ -18,6 +18,7 @@ api.interceptors.response.use(
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export const getDashboard = () => api.get('/dashboard').then(r => r.data)
+export const getServiceHealth = () => api.get('/health/services').then(r => r.data)
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 

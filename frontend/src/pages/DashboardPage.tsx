@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { User } from '../App'
-import { getDashboard } from '../api/client'
+import { getDashboard, getServiceHealth } from '../api/client'
 
 interface DashboardData {
   tenantName: string
@@ -13,6 +13,116 @@ interface DashboardData {
     other: number
   }
   rawOsCounts: Record<string, number>
+}
+
+interface ServiceStatus {
+  service: string
+  status: string
+  healthy: boolean
+}
+
+interface HealthData {
+  services: ServiceStatus[]
+  allOperational: boolean | null
+  permissionMissing: boolean
+}
+
+// Human-readable labels for Graph status codes
+const STATUS_LABELS: Record<string, string> = {
+  serviceOperational: 'Operational',
+  investigating: 'Investigating',
+  restoringService: 'Restoring service',
+  serviceDegradation: 'Service degradation',
+  serviceInterruption: 'Service interruption',
+  extendedRecovery: 'Extended recovery',
+  falsePositive: 'False positive',
+  investigationSuspended: 'Investigation suspended',
+  resolved: 'Resolved',
+  mitigatedExternal: 'Mitigated (external)',
+  mitigated: 'Mitigated',
+  resolvedExternal: 'Resolved (external)',
+  confirmed: 'Confirmed issue',
+  reported: 'Reported',
+}
+
+function ServiceHealthBanner({ health }: { health: HealthData | null; loading: boolean }) {
+  if (!health) {
+    // Still loading — show subtle placeholder
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-sm text-gray-400 animate-pulse">
+        <span className="h-2 w-2 rounded-full bg-gray-300" />
+        Checking Microsoft service health…
+      </div>
+    )
+  }
+
+  if (health.permissionMissing) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-500">
+        <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Service health unavailable —{' '}
+        <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ServiceHealth.Read.All</span>{' '}
+        permission required
+      </div>
+    )
+  }
+
+  if (health.services.length === 0) {
+    return null
+  }
+
+  if (health.allOperational) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 flex-shrink-0">
+          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
+        <span className="font-medium">All Microsoft services operational</span>
+        <span className="text-green-600 text-xs ml-1">
+          ({health.services.map(s => s.service).join(', ')})
+        </span>
+      </div>
+    )
+  }
+
+  // One or more services have issues — show per-service chips
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+      <div className="flex items-center gap-2 mb-2">
+        <svg className="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span className="text-sm font-semibold text-amber-800">Microsoft service issues detected</span>
+        <a
+          href="https://admin.microsoft.com/adminportal/home#/servicehealth"
+          target="_blank"
+          rel="noreferrer"
+          className="ml-auto text-xs text-amber-700 hover:underline flex-shrink-0"
+        >
+          View in M365 Admin →
+        </a>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {health.services.map(svc => (
+          <span
+            key={svc.service}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+              svc.healthy
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${svc.healthy ? 'bg-green-500' : 'bg-red-500'}`} />
+            {svc.service} — {STATUS_LABELS[svc.status] ?? svc.status}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 interface Props {
@@ -95,12 +205,18 @@ export default function DashboardPage({ user }: Props) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [health, setHealth] = useState<HealthData | null>(null)
 
   useEffect(() => {
     getDashboard()
       .then(setData)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load dashboard'))
       .finally(() => setLoading(false))
+
+    // Load service health independently so it doesn't block the main dashboard
+    getServiceHealth()
+      .then(setHealth)
+      .catch(() => setHealth({ services: [], allOperational: null, permissionMissing: false }))
   }, [])
 
   const hour = new Date().getHours()
@@ -117,6 +233,11 @@ export default function DashboardPage({ user }: Props) {
         <p className="text-sm text-gray-500 mt-1">
           Here's a snapshot of your Intune environment.
         </p>
+      </div>
+
+      {/* Service health banner — loads independently */}
+      <div className="mb-6">
+        <ServiceHealthBanner health={health} loading={!health} />
       </div>
 
       {loading && (
