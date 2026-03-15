@@ -18,6 +18,16 @@ interface LayoutProps {
 
 const navItems = [
   {
+    to: '/',
+    label: 'Dashboard',
+    exact: true,
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
     to: '/bulk-add',
     label: 'Bulk Device Add',
     icon: (
@@ -87,7 +97,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-700 to-purple-900">
             <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
             </svg>
@@ -107,7 +117,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                   isActive
-                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium'
+                    ? 'bg-violet-100 text-violet-900 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
@@ -131,7 +141,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
           </button>
 
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-semibold flex-shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-200 text-violet-900 text-xs font-semibold flex-shrink-0">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">

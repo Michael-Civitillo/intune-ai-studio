@@ -15,6 +15,10 @@ api.interceptors.response.use(
   }
 )
 
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+export const getDashboard = () => api.get('/dashboard').then(r => r.data)
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
 export const getSetupStatus = () => api.get('/setup/status').then(r => r.data)

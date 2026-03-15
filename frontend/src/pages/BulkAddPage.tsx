@@ -85,7 +85,7 @@ export default function BulkAddPage() {
       {/* Step 1: Target group */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">1</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-violet-800 to-purple-900 text-white text-xs">1</span>
           Select target group
         </h2>
         <GroupSearch
@@ -106,7 +106,7 @@ export default function BulkAddPage() {
       {/* Step 2: Device names */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">2</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-violet-800 to-purple-900 text-white text-xs">2</span>
           Enter device names
         </h2>
         <div className="space-y-3">
@@ -140,7 +140,7 @@ export default function BulkAddPage() {
       {!result && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">3</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-violet-800 to-purple-900 text-white text-xs">3</span>
             Preview & submit
           </h2>
 
@@ -207,7 +207,7 @@ export default function BulkAddPage() {
           <button
             onClick={handleSubmit}
             disabled={loading || !selectedGroup || deviceNames.length === 0}
-            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-violet-800 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -227,7 +227,7 @@ export default function BulkAddPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-900">Results</h2>
-            <button onClick={handleReset} className="text-xs text-fuchsia-600 hover:underline">
+            <button onClick={handleReset} className="text-xs text-violet-700 hover:underline">
               Start new batch
             </button>
           </div>

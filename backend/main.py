@@ -108,6 +108,17 @@ def auth_logout():
     return {"logged_out": True}
 
 
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/dashboard")
+async def dashboard():
+    token = require_token()
+    try:
+        return await graph.get_dashboard_data(token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Groups ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/groups/search")

@@ -32,6 +32,39 @@ async def _get_paged(client: httpx.AsyncClient, token: str, url: str, params: di
     return items
 
 
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+async def get_dashboard_data(token: str) -> dict:
+    """Returns tenant name and managed device counts by OS."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        org_task = _get(client, token, f"{GRAPH_BASE}/organization", {"$select": "displayName"})
+        devices_task = _get_paged(client, token, f"{GRAPH_BASE}/deviceManagement/managedDevices", {
+            "$select": "operatingSystem",
+            "$top": "999",
+        })
+        org_data, devices = await asyncio.gather(org_task, devices_task)
+
+    tenant_name = (org_data.get("value") or [{}])[0].get("displayName", "Unknown Tenant")
+
+    os_counts: dict[str, int] = {}
+    for dev in devices:
+        os_name = (dev.get("operatingSystem") or "Unknown").strip()
+        os_counts[os_name] = os_counts.get(os_name, 0) + 1
+
+    return {
+        "tenantName": tenant_name,
+        "totalDevices": len(devices),
+        "osCounts": {
+            "windows": os_counts.get("Windows", 0),
+            "macOS": os_counts.get("macOS", 0),
+            "iOS": os_counts.get("iOS", 0),
+            "android": os_counts.get("Android", 0),
+            "other": sum(v for k, v in os_counts.items() if k not in ("Windows", "macOS", "iOS", "Android")),
+        },
+        "rawOsCounts": os_counts,
+    }
+
+
 # ── Auth / User ──────────────────────────────────────────────────────────────
 
 async def get_me(token: str) -> dict:

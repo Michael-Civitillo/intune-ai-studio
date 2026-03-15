@@ -82,7 +82,7 @@ export default function GroupSyncPage() {
       {/* Step 1: Select group */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-violet-800 to-purple-900 text-white text-xs">
             1
           </span>
           Select target group
@@ -94,7 +94,7 @@ export default function GroupSyncPage() {
       {!results && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white text-xs">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-violet-800 to-purple-900 text-white text-xs">
               2
             </span>
             Confirm & sync
@@ -141,7 +141,7 @@ export default function GroupSyncPage() {
           <button
             onClick={handleSync}
             disabled={loading || !selectedGroup || !confirmed}
-            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-violet-800 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -170,7 +170,7 @@ export default function GroupSyncPage() {
             </h2>
             <button
               onClick={handleReset}
-              className="text-xs font-medium text-fuchsia-600 hover:text-fuchsia-700"
+              className="text-xs font-medium text-violet-700 hover:text-fuchsia-700"
             >
               Sync another group
             </button>

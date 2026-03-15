@@ -7,6 +7,7 @@ import BulkAddPage from './pages/BulkAddPage'
 import GroupAuditPage from './pages/GroupAuditPage'
 import GroupMembersPage from './pages/GroupMembersPage'
 import GroupSyncPage from './pages/GroupSyncPage'
+import DashboardPage from './pages/DashboardPage'
 import SetupWizard from './pages/SetupWizard'
 
 type AppState = 'loading' | 'setup' | 'auth' | 'ready'
@@ -76,7 +77,7 @@ export default function App() {
     <BrowserRouter>
       <Layout user={user!} onLogout={handleLogout}>
         <Routes>
-          <Route path="/" element={<Navigate to="/bulk-add" replace />} />
+          <Route path="/" element={<DashboardPage user={user!} />} />
           <Route path="/bulk-add" element={<BulkAddPage />} />
           <Route path="/group-audit" element={<GroupAuditPage />} />
           <Route path="/group-members" element={<GroupMembersPage />} />
