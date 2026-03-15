@@ -249,22 +249,27 @@ async def sync_group_devices(token: str, group_id: str) -> dict:
 
     async def lookup_batch(batch: list[dict]) -> dict[str, str]:
         """Returns {entra_object_id: managed_device_id} for found devices."""
-        reqs = [
-            {"id": str(i), "method": "GET",
-             "url": f"/deviceManagement/managedDevices?$filter=azureADDeviceId eq '{dev.get('deviceId','')}'&$select=id&$top=1"}
-            for i, dev in enumerate(batch) if dev.get("deviceId")
-        ]
-        if not reqs:
+        # Build a list of (request_id, device) only for devices that have a deviceId
+        # so that resp["id"] always maps back to the correct device unambiguously.
+        eligible = [(str(i), dev) for i, dev in enumerate(batch) if dev.get("deviceId")]
+        if not eligible:
             return {}
-        async with httpx.AsyncClient() as c:
+        reqs = [
+            {"id": req_id, "method": "GET",
+             "url": f"/deviceManagement/managedDevices?$filter=azureADDeviceId eq '{dev['deviceId']}'&$select=id&$top=1"}
+            for req_id, dev in eligible
+        ]
+        id_to_dev = {req_id: dev for req_id, dev in eligible}
+        async with httpx.AsyncClient(timeout=60.0) as c:
             r = await c.post(f"{GRAPH_BASE}/$batch", headers=_headers(token), json={"requests": reqs})
             r.raise_for_status()
         found: dict[str, str] = {}
         for resp in r.json().get("responses", []):
-            idx = int(resp["id"])
-            vals = resp.get("body", {}).get("value", [])
-            if vals:
-                found[batch[idx]["id"]] = vals[0]["id"]
+            dev = id_to_dev.get(resp["id"])
+            if dev:
+                vals = resp.get("body", {}).get("value", [])
+                if vals:
+                    found[dev["id"]] = vals[0]["id"]
         return found
 
     lookup_chunks = [devices[i:i + 20] for i in range(0, len(devices), 20)]
@@ -278,24 +283,28 @@ async def sync_group_devices(token: str, group_id: str) -> dict:
     to_sync = [(dev["id"], managed_map[dev["id"]]) for dev in devices if dev["id"] in managed_map]
 
     async def sync_batch(batch: list[tuple[str, str]]) -> dict[str, str]:
-        """Returns {entra_id: "ok" | "error: <msg>"} for each device."""
+        """Returns {entra_id: "ok" | "error: <msg>"} for each device.
+        syncDevice is a POST action with no request body — omit body/headers
+        in the batch item so Graph doesn't reject it as a malformed request."""
+        id_to_entra = {str(i): entra_id for i, (entra_id, _) in enumerate(batch)}
         reqs = [
             {"id": str(i), "method": "POST",
-             "url": f"/deviceManagement/managedDevices/{mid}/syncDevice",
-             "body": {}, "headers": {"Content-Type": "application/json"}}
+             "url": f"/deviceManagement/managedDevices/{mid}/syncDevice"}
             for i, (_, mid) in enumerate(batch)
         ]
-        async with httpx.AsyncClient() as c:
+        async with httpx.AsyncClient(timeout=60.0) as c:
             r = await c.post(f"{GRAPH_BASE}/$batch", headers=_headers(token), json={"requests": reqs})
             r.raise_for_status()
         result: dict[str, str] = {}
         for resp in r.json().get("responses", []):
-            idx = int(resp["id"])
-            entra_id = batch[idx][0]
+            entra_id = id_to_entra.get(resp["id"], "")
+            if not entra_id:
+                continue
             if resp.get("status") == 204:
                 result[entra_id] = "ok"
             else:
-                msg = resp.get("body", {}).get("error", {}).get("message", f"HTTP {resp.get('status', '?')}")
+                body = resp.get("body") or {}
+                msg = body.get("error", {}).get("message", f"HTTP {resp.get('status', '?')}")
                 result[entra_id] = f"error: {msg}"
         return result
 
