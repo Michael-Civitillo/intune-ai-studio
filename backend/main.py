@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+import ai
 import auth
 import graph
 
@@ -16,7 +17,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-app = FastAPI(title="Intune Admin Toolbox API")
+app = FastAPI(title="Intune AI Studio API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -279,3 +280,85 @@ async def devices_bulk_add(payload: BulkAddPayload):
         "error": sum(1 for r in results if r["status"] == "error"),
     }
     return {"results": results, "summary": summary}
+
+
+# ── AI Features ──────────────────────────────────────────────────────────────
+
+class DeviceSearchPayload(BaseModel):
+    query: str = Field(..., max_length=500)
+
+
+class PolicyExplainPayload(BaseModel):
+    policy_json: str = Field(..., max_length=50000)
+
+
+class RemediationPayload(BaseModel):
+    description: str = Field(..., max_length=2000)
+
+
+class GroupAIPayload(BaseModel):
+    group_id: str
+
+
+class AISetupPayload(BaseModel):
+    api_key: str
+
+
+@app.get("/api/ai/status")
+def ai_status():
+    return ai.get_ai_status()
+
+
+@app.post("/api/ai/setup")
+def ai_setup(payload: AISetupPayload):
+    ai.save_api_key(payload.api_key)
+    return {"saved": True}
+
+
+@app.post("/api/ai/device-search")
+async def ai_device_search(payload: DeviceSearchPayload):
+    token = require_token()
+    try:
+        return await ai.device_search(payload.query, token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ai/policy-explain")
+async def ai_policy_explain(payload: PolicyExplainPayload):
+    require_token()
+    return StreamingResponse(
+        ai.explain_policy_stream(payload.policy_json),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post("/api/ai/remediation-script")
+async def ai_remediation_script(payload: RemediationPayload):
+    require_token()
+    return StreamingResponse(
+        ai.generate_remediation_stream(payload.description),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post("/api/ai/compliance-gap")
+async def ai_compliance_gap(payload: GroupAIPayload):
+    token = require_token()
+    return StreamingResponse(
+        ai.compliance_gap_stream(token, payload.group_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post("/api/ai/group-cleanup")
+async def ai_group_cleanup(payload: GroupAIPayload):
+    token = require_token()
+    return StreamingResponse(
+        ai.group_cleanup_stream(token, payload.group_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

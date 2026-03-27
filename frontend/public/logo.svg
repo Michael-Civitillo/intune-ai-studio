@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Main gradient: deep violet to purple -->
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+    <!-- Accent gradient: electric violet to fuchsia -->
+    <linearGradient id="accent" x1="128" y1="128" x2="384" y2="384" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#e879f9"/>
+    </linearGradient>
+    <!-- Glow for the bolt -->
+    <linearGradient id="bolt" x1="220" y1="120" x2="320" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e9d5ff"/>
+    </linearGradient>
+    <!-- Subtle inner shadow -->
+    <radialGradient id="glow" cx="50%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Node dots gradient -->
+    <linearGradient id="nodes" x1="100" y1="100" x2="412" y2="412" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- Circuit / neural network lines (AI motif) -->
+  <!-- Horizontal connections -->
+  <line x1="120" y1="180" x2="200" y2="180" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <line x1="312" y1="180" x2="392" y2="180" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <line x1="120" y1="332" x2="200" y2="332" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+  <line x1="312" y1="332" x2="392" y2="332" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Diagonal connections to center -->
+  <line x1="200" y1="180" x2="256" y2="240" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="312" y1="180" x2="256" y2="240" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="200" y1="332" x2="256" y2="272" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="312" y1="332" x2="256" y2="272" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Vertical side lines -->
+  <line x1="120" y1="180" x2="120" y2="332" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.35"/>
+  <line x1="392" y1="180" x2="392" y2="332" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Lightning bolt (AI power) — center focal point -->
+  <path d="M280 130 L230 260 L275 260 L232 390 L310 235 L265 235 Z"
+        fill="url(#bolt)" opacity="0.95"/>
+
+  <!-- Neural network nodes (circles at intersections) -->
+  <!-- Top row -->
+  <circle cx="120" cy="180" r="14" fill="url(#nodes)" opacity="0.8"/>
+  <circle cx="200" cy="180" r="11" fill="url(#nodes)" opacity="0.7"/>
+  <circle cx="312" cy="180" r="11" fill="url(#nodes)" opacity="0.7"/>
+  <circle cx="392" cy="180" r="14" fill="url(#nodes)" opacity="0.8"/>
+
+  <!-- Bottom row -->
+  <circle cx="120" cy="332" r="14" fill="url(#nodes)" opacity="0.8"/>
+  <circle cx="200" cy="332" r="11" fill="url(#nodes)" opacity="0.7"/>
+  <circle cx="312" cy="332" r="11" fill="url(#nodes)" opacity="0.7"/>
+  <circle cx="392" cy="332" r="14" fill="url(#nodes)" opacity="0.8"/>
+
+  <!-- Small accent dots (device endpoints) -->
+  <circle cx="120" cy="256" r="7" fill="#e879f9" opacity="0.6"/>
+  <circle cx="392" cy="256" r="7" fill="#e879f9" opacity="0.6"/>
+</svg>
