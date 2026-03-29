@@ -1,4 +1,10 @@
-"""Claude AI integration layer for Intune AI Studio.
+"""Multi-provider AI integration layer for Intune AI Studio.
+
+Supported providers:
+  - anthropic  (Claude)
+  - openai     (GPT-4o)
+  - azure      (Azure OpenAI / Copilot)
+  - gemini     (Google Gemini)
 
 Provides streaming and non-streaming AI features:
   - Natural language device search (NL → OData filter → Graph query)
@@ -14,52 +20,233 @@ import os
 from pathlib import Path
 from typing import AsyncIterator
 
-import anthropic
-
 import graph
 
 log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
-MODEL = "claude-sonnet-4-20250514"
 MAX_TOKENS = 4096
 
+# Default models per provider
+DEFAULT_MODELS = {
+    "anthropic": "claude-sonnet-4-20250514",
+    "openai": "gpt-4o",
+    "azure": "gpt-4o",
+    "gemini": "gemini-2.5-flash",
+}
 
-# ── Client Management ────────────────────────────────────────────────────────
+PROVIDER_LABELS = {
+    "anthropic": "Anthropic (Claude)",
+    "openai": "OpenAI (GPT-4o)",
+    "azure": "Azure OpenAI (Copilot)",
+    "gemini": "Google (Gemini)",
+}
 
-def _get_api_key() -> str | None:
-    """Read API key from config.json, falling back to env var."""
+
+# ── Config Management ────────────────────────────────────────────────────────
+
+def _load_ai_config() -> dict:
+    """Load AI provider config from config.json."""
     if CONFIG_PATH.exists():
         cfg = json.loads(CONFIG_PATH.read_text())
-        key = cfg.get("anthropic_api_key", "")
-        if key:
-            return key
-    return os.environ.get("ANTHROPIC_API_KEY")
+        return {
+            "provider": cfg.get("ai_provider", ""),
+            "api_key": cfg.get("ai_api_key", ""),
+            "endpoint": cfg.get("ai_endpoint", ""),
+            "model": cfg.get("ai_model", ""),
+        }
+    return {"provider": "", "api_key": "", "endpoint": "", "model": ""}
 
 
 def get_ai_status() -> dict:
-    """Check whether the Anthropic API key is configured."""
-    return {"configured": bool(_get_api_key())}
+    """Check whether AI is configured and which provider is active."""
+    cfg = _load_ai_config()
+    # Fall back to legacy anthropic_api_key field
+    if not cfg["api_key"] and CONFIG_PATH.exists():
+        full_cfg = json.loads(CONFIG_PATH.read_text())
+        if full_cfg.get("anthropic_api_key"):
+            cfg["provider"] = "anthropic"
+            cfg["api_key"] = full_cfg["anthropic_api_key"]
+    # Fall back to env vars
+    if not cfg["api_key"]:
+        for env_key, provider in [
+            ("ANTHROPIC_API_KEY", "anthropic"),
+            ("OPENAI_API_KEY", "openai"),
+            ("AZURE_OPENAI_API_KEY", "azure"),
+            ("GEMINI_API_KEY", "gemini"),
+        ]:
+            val = os.environ.get(env_key)
+            if val:
+                cfg["provider"] = provider
+                cfg["api_key"] = val
+                break
+    return {
+        "configured": bool(cfg["provider"] and cfg["api_key"]),
+        "provider": cfg["provider"],
+        "providers": list(PROVIDER_LABELS.keys()),
+        "providerLabels": PROVIDER_LABELS,
+    }
 
 
-def save_api_key(api_key: str) -> None:
-    """Persist the Anthropic API key into config.json alongside existing fields."""
+def save_ai_config(provider: str, api_key: str, endpoint: str = "", model: str = "") -> None:
+    """Persist AI provider settings into config.json."""
     cfg = {}
     if CONFIG_PATH.exists():
         cfg = json.loads(CONFIG_PATH.read_text())
-    cfg["anthropic_api_key"] = api_key
+    cfg["ai_provider"] = provider
+    cfg["ai_api_key"] = api_key
+    cfg["ai_endpoint"] = endpoint
+    cfg["ai_model"] = model
     CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
-
-
-def _client() -> anthropic.AsyncAnthropic:
-    key = _get_api_key()
-    if not key:
-        raise RuntimeError("Anthropic API key not configured. Add it in Settings or set ANTHROPIC_API_KEY.")
-    return anthropic.AsyncAnthropic(api_key=key)
 
 
 def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
+
+
+# ── Provider Abstraction ─────────────────────────────────────────────────────
+
+def _get_provider_config() -> dict:
+    """Get the active provider config, with fallbacks."""
+    cfg = _load_ai_config()
+    # Legacy fallback
+    if not cfg["api_key"] and CONFIG_PATH.exists():
+        full_cfg = json.loads(CONFIG_PATH.read_text())
+        if full_cfg.get("anthropic_api_key"):
+            cfg["provider"] = "anthropic"
+            cfg["api_key"] = full_cfg["anthropic_api_key"]
+    # Env fallback
+    if not cfg["api_key"]:
+        for env_key, provider in [
+            ("ANTHROPIC_API_KEY", "anthropic"),
+            ("OPENAI_API_KEY", "openai"),
+            ("AZURE_OPENAI_API_KEY", "azure"),
+            ("GEMINI_API_KEY", "gemini"),
+        ]:
+            val = os.environ.get(env_key)
+            if val:
+                cfg["provider"] = provider
+                cfg["api_key"] = val
+                if provider == "azure":
+                    cfg["endpoint"] = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+                break
+    if not cfg["provider"] or not cfg["api_key"]:
+        raise RuntimeError("No AI provider configured. Set one up in the AI Tools settings.")
+    cfg["model"] = cfg["model"] or DEFAULT_MODELS.get(cfg["provider"], "")
+    return cfg
+
+
+async def _create_message(system: str, user_content: str) -> str:
+    """Non-streaming message → full text response."""
+    cfg = _get_provider_config()
+    provider = cfg["provider"]
+
+    if provider == "anthropic":
+        import anthropic
+        client = anthropic.AsyncAnthropic(api_key=cfg["api_key"])
+        response = await client.messages.create(
+            model=cfg["model"], max_tokens=MAX_TOKENS,
+            system=system,
+            messages=[{"role": "user", "content": user_content}],
+        )
+        return response.content[0].text
+
+    elif provider in ("openai", "azure"):
+        import openai
+        if provider == "azure":
+            client = openai.AsyncAzureOpenAI(
+                api_key=cfg["api_key"],
+                azure_endpoint=cfg["endpoint"],
+                api_version="2024-12-01-preview",
+            )
+        else:
+            client = openai.AsyncOpenAI(api_key=cfg["api_key"])
+        response = await client.chat.completions.create(
+            model=cfg["model"], max_tokens=MAX_TOKENS,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_content},
+            ],
+        )
+        return response.choices[0].message.content or ""
+
+    elif provider == "gemini":
+        from google import genai
+        client = genai.Client(api_key=cfg["api_key"])
+        response = await client.aio.models.generate_content(
+            model=cfg["model"],
+            contents=user_content,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=system,
+                max_output_tokens=MAX_TOKENS,
+            ),
+        )
+        return response.text or ""
+
+    raise RuntimeError(f"Unknown AI provider: {provider}")
+
+
+async def _stream_message(system: str, user_content: str) -> AsyncIterator[str]:
+    """Streaming message → yields SSE token events."""
+    cfg = _get_provider_config()
+    provider = cfg["provider"]
+
+    try:
+        if provider == "anthropic":
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=cfg["api_key"])
+            async with client.messages.stream(
+                model=cfg["model"], max_tokens=MAX_TOKENS,
+                system=system,
+                messages=[{"role": "user", "content": user_content}],
+            ) as stream:
+                async for text in stream.text_stream:
+                    yield _sse({"type": "token", "text": text})
+
+        elif provider in ("openai", "azure"):
+            import openai
+            if provider == "azure":
+                client = openai.AsyncAzureOpenAI(
+                    api_key=cfg["api_key"],
+                    azure_endpoint=cfg["endpoint"],
+                    api_version="2024-12-01-preview",
+                )
+            else:
+                client = openai.AsyncOpenAI(api_key=cfg["api_key"])
+            stream = await client.chat.completions.create(
+                model=cfg["model"], max_tokens=MAX_TOKENS, stream=True,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_content},
+                ],
+            )
+            async for chunk in stream:
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    yield _sse({"type": "token", "text": delta.content})
+
+        elif provider == "gemini":
+            from google import genai
+            client = genai.Client(api_key=cfg["api_key"])
+            async for chunk in client.aio.models.generate_content_stream(
+                model=cfg["model"],
+                contents=user_content,
+                config=genai.types.GenerateContentConfig(
+                    system_instruction=system,
+                    max_output_tokens=MAX_TOKENS,
+                ),
+            ):
+                if chunk.text:
+                    yield _sse({"type": "token", "text": chunk.text})
+
+        else:
+            yield _sse({"type": "error", "message": f"Unknown provider: {provider}"})
+            return
+
+        yield _sse({"type": "done"})
+
+    except Exception as e:
+        yield _sse({"type": "error", "message": str(e)})
 
 
 # ── Feature 1: Natural Language Device Search ────────────────────────────────
@@ -105,32 +292,21 @@ If the query cannot be translated to a valid OData filter, respond with:
 {"filter": null, "select": null, "description": "<explanation of why>"}"""
 
 
-_ALLOWED_PROPERTIES = {
-    "devicename", "operatingsystem", "compliancestate", "isencrypted",
-    "model", "manufacturer", "enrolleddatetime", "lastsyncdatetime",
-    "userdisplayname", "userprincipalname", "managementagent",
-    "deviceenrollmenttype", "manageddevicename", "serialnumber",
-    "totalstoragespaceInbytes", "freestoragespaceInbytes",
-}
-
-
 async def device_search(query: str, token: str) -> dict:
     """Translate a natural language query into a Graph API device search."""
     import datetime
     today = datetime.date.today().isoformat()
 
-    client = _client()
-    response = await client.messages.create(
-        model=MODEL,
-        max_tokens=512,
-        system=_DEVICE_SEARCH_SYSTEM,
-        messages=[{
-            "role": "user",
-            "content": f"Today's date is {today}. Query: {query}",
-        }],
+    raw = await _create_message(
+        _DEVICE_SEARCH_SYSTEM,
+        f"Today's date is {today}. Query: {query}",
     )
 
-    raw = response.content[0].text.strip()
+    raw = raw.strip()
+    # Some providers wrap JSON in markdown code fences
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
@@ -154,7 +330,7 @@ async def device_search(query: str, token: str) -> dict:
     except httpx.HTTPStatusError as e:
         error_body = e.response.text if hasattr(e.response, 'text') else str(e)
         return {
-            "error": f"Graph API rejected the generated filter. Try rephrasing your query.",
+            "error": "Graph API rejected the generated filter. Try rephrasing your query.",
             "filter": odata_filter,
             "graphError": error_body,
             "devices": [],
@@ -187,19 +363,11 @@ Write for an IT admin audience — be specific and practical, not academic."""
 
 async def explain_policy_stream(policy_json: str) -> AsyncIterator[str]:
     """Stream a plain-English explanation of an Intune policy."""
-    client = _client()
-    try:
-        async with client.messages.stream(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=_POLICY_EXPLAINER_SYSTEM,
-            messages=[{"role": "user", "content": f"Explain this Intune policy:\n\n```json\n{policy_json}\n```"}],
-        ) as stream:
-            async for text in stream.text_stream:
-                yield _sse({"type": "token", "text": text})
-        yield _sse({"type": "done"})
-    except Exception as e:
-        yield _sse({"type": "error", "message": str(e)})
+    async for event in _stream_message(
+        _POLICY_EXPLAINER_SYSTEM,
+        f"Explain this Intune policy:\n\n```json\n{policy_json}\n```",
+    ):
+        yield event
 
 
 # ── Feature 3: Remediation Script Generator ─────────────────────────────────
@@ -237,19 +405,11 @@ Format your response as:
 
 async def generate_remediation_stream(description: str) -> AsyncIterator[str]:
     """Stream a PowerShell remediation script pair."""
-    client = _client()
-    try:
-        async with client.messages.stream(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=_REMEDIATION_SYSTEM,
-            messages=[{"role": "user", "content": f"Create an Intune remediation script for this problem:\n\n{description}"}],
-        ) as stream:
-            async for text in stream.text_stream:
-                yield _sse({"type": "token", "text": text})
-        yield _sse({"type": "done"})
-    except Exception as e:
-        yield _sse({"type": "error", "message": str(e)})
+    async for event in _stream_message(
+        _REMEDIATION_SYSTEM,
+        f"Create an Intune remediation script for this problem:\n\n{description}",
+    ):
+        yield event
 
 
 # ── Feature 4: Compliance Gap Analysis ───────────────────────────────────────
@@ -281,7 +441,6 @@ Focus on practical, actionable advice for a mid-size organization."""
 async def compliance_gap_stream(token: str, group_id: str) -> AsyncIterator[str]:
     """Fetch group policies and stream a compliance gap analysis."""
     try:
-        # Fetch current assignments
         yield _sse({"type": "status", "message": "Fetching group policies..."})
         audit = await graph.get_group_audit(token, group_id)
         group = await graph.get_group(token, group_id)
@@ -297,16 +456,11 @@ async def compliance_gap_stream(token: str, group_id: str) -> AsyncIterator[str]
 
         yield _sse({"type": "status", "message": f"Analyzing {audit.get('totalAssignments', 0)} assignments..."})
 
-        client = _client()
-        async with client.messages.stream(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=_COMPLIANCE_GAP_SYSTEM,
-            messages=[{"role": "user", "content": f"Analyze the compliance posture for this group:\n\n```json\n{policy_summary}\n```"}],
-        ) as stream:
-            async for text in stream.text_stream:
-                yield _sse({"type": "token", "text": text})
-        yield _sse({"type": "done"})
+        async for event in _stream_message(
+            _COMPLIANCE_GAP_SYSTEM,
+            f"Analyze the compliance posture for this group:\n\n```json\n{policy_summary}\n```",
+        ):
+            yield event
     except Exception as e:
         yield _sse({"type": "error", "message": str(e)})
 
@@ -368,15 +522,10 @@ async def group_cleanup_stream(token: str, group_id: str) -> AsyncIterator[str]:
 
         yield _sse({"type": "status", "message": "Analyzing group..."})
 
-        client = _client()
-        async with client.messages.stream(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=_CLEANUP_ADVISOR_SYSTEM,
-            messages=[{"role": "user", "content": f"Should this group be deleted?\n\n```json\n{group_data}\n```"}],
-        ) as stream:
-            async for text in stream.text_stream:
-                yield _sse({"type": "token", "text": text})
-        yield _sse({"type": "done"})
+        async for event in _stream_message(
+            _CLEANUP_ADVISOR_SYSTEM,
+            f"Should this group be deleted?\n\n```json\n{group_data}\n```",
+        ):
+            yield event
     except Exception as e:
         yield _sse({"type": "error", "message": str(e)})

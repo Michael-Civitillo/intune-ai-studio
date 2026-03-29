@@ -60,7 +60,7 @@ export const syncGroupDevices = (group_id: string) =>
 // ── AI Features ──────────────────────────────────────────────────────────────
 
 export const getAIStatus = () => api.get('/ai/status').then(r => r.data)
-export const saveAISetup = (api_key: string) =>
-  api.post('/ai/setup', { api_key }).then(r => r.data)
+export const saveAISetup = (provider: string, api_key: string, endpoint?: string, model?: string) =>
+  api.post('/ai/setup', { provider, api_key, endpoint: endpoint || '', model: model || '' }).then(r => r.data)
 export const deviceSearch = (query: string) =>
   api.post('/ai/device-search', { query }).then(r => r.data)

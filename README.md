@@ -38,7 +38,16 @@ Tired of wrestling with PowerShell scripts and Graph Explorer just to do basic I
 | **Compliance Gaps** | Select a group and AI reviews its assigned policies against Microsoft security baselines, identifying gaps with risk ratings and specific recommendations. |
 | **Cleanup Advisor** | Select a group and AI analyzes its assignments, members, and type to tell you whether it's safe to delete — with a pre-deletion checklist if needed. |
 
-AI features are powered by Claude and require an [Anthropic API key](https://console.anthropic.com/settings/keys). Your key is stored locally and never leaves your machine.
+AI features work with your choice of provider:
+
+| Provider | Model | Get a key |
+|----------|-------|-----------|
+| **Anthropic** | Claude Sonnet | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| **OpenAI** | GPT-4o | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Azure OpenAI** | Your deployed model | [portal.azure.com](https://portal.azure.com) |
+| **Google** | Gemini 2.5 Flash | [aistudio.google.com](https://aistudio.google.com/apikey) |
+
+Your API key is stored locally and never leaves your machine.
 
 ---
 
@@ -77,7 +86,7 @@ The in-app wizard walks you through everything:
 2. **Paste your Client ID + Tenant ID**
 3. **Sign in** via Microsoft's device code flow — your password never touches this app
 4. **Check your permissions** — a live checklist shows exactly what's granted
-5. **(Optional) Add your Anthropic API key** — prompted when you first use any AI feature
+5. **(Optional) Choose an AI provider** — prompted when you first use any AI feature (Anthropic, OpenAI, Azure OpenAI, or Gemini)
 
 ### Required permissions (delegated)
 
@@ -117,14 +126,14 @@ intune-ai-studio/
 
 - **Backend** on `:8000`, **frontend** dev server on `:5173` (Vite proxies `/api/*` to the backend)
 - Force Sync and AI features use **Server-Sent Events** for real-time streaming
-- AI features use the Anthropic SDK with Claude Sonnet for fast, accurate responses
+- AI features support Anthropic, OpenAI, Azure OpenAI, and Google Gemini — pick your provider
 
 ---
 
 ## Security
 
 - Auth uses Microsoft's **device code flow** — you authenticate on Microsoft's own servers
-- Client ID, Tenant ID, and Anthropic API key live in `backend/config.json` (gitignored)
+- Client ID, Tenant ID, and AI provider API key live in `backend/config.json` (gitignored)
 - Tokens are in memory only and cleared on backend restart or sign-out
 - OData injection protection on all Graph API filter inputs
 - 30-second timeout on all external API calls

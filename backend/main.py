@@ -301,7 +301,10 @@ class GroupAIPayload(BaseModel):
 
 
 class AISetupPayload(BaseModel):
+    provider: str
     api_key: str
+    endpoint: str = ""
+    model: str = ""
 
 
 @app.get("/api/ai/status")
@@ -311,7 +314,7 @@ def ai_status():
 
 @app.post("/api/ai/setup")
 def ai_setup(payload: AISetupPayload):
-    ai.save_api_key(payload.api_key)
+    ai.save_ai_config(payload.provider, payload.api_key, payload.endpoint, payload.model)
     return {"saved": True}
 
 
