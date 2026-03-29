@@ -56,3 +56,11 @@ export const bulkAddDevices = (group_id: string, device_names: string[]) =>
 
 export const syncGroupDevices = (group_id: string) =>
   api.post(`/groups/${group_id}/sync`).then(r => r.data)
+
+// ── AI Features ──────────────────────────────────────────────────────────────
+
+export const getAIStatus = () => api.get('/ai/status').then(r => r.data)
+export const saveAISetup = (api_key: string) =>
+  api.post('/ai/setup', { api_key }).then(r => r.data)
+export const deviceSearch = (query: string) =>
+  api.post('/ai/device-search', { query }).then(r => r.data)

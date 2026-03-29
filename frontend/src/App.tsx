@@ -4,10 +4,15 @@ import { getMe, getSetupStatus } from './api/client'
 import Layout from './components/Layout'
 import AuthPage from './pages/AuthPage'
 import BulkAddPage from './pages/BulkAddPage'
+import ComplianceGapPage from './pages/ComplianceGapPage'
+import DashboardPage from './pages/DashboardPage'
+import DeviceSearchPage from './pages/DeviceSearchPage'
 import GroupAuditPage from './pages/GroupAuditPage'
+import GroupCleanupPage from './pages/GroupCleanupPage'
 import GroupMembersPage from './pages/GroupMembersPage'
 import GroupSyncPage from './pages/GroupSyncPage'
-import DashboardPage from './pages/DashboardPage'
+import PolicyExplainerPage from './pages/PolicyExplainerPage'
+import RemediationPage from './pages/RemediationPage'
 import SetupWizard from './pages/SetupWizard'
 
 type AppState = 'loading' | 'setup' | 'auth' | 'ready'
@@ -82,6 +87,11 @@ export default function App() {
           <Route path="/group-audit" element={<GroupAuditPage />} />
           <Route path="/group-members" element={<GroupMembersPage />} />
           <Route path="/group-sync" element={<GroupSyncPage />} />
+          <Route path="/ai/device-search" element={<DeviceSearchPage />} />
+          <Route path="/ai/policy-explain" element={<PolicyExplainerPage />} />
+          <Route path="/ai/remediation-script" element={<RemediationPage />} />
+          <Route path="/ai/compliance-gap" element={<ComplianceGapPage />} />
+          <Route path="/ai/group-cleanup" element={<GroupCleanupPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

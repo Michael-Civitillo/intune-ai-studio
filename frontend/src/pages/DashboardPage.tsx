@@ -310,7 +310,7 @@ export default function DashboardPage({ user }: Props) {
 
           {/* Quick links */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick actions</h2>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Admin Tools</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 { to: '/bulk-add', label: 'Bulk Device Add', desc: 'Add devices to a group', emoji: '➕' },
@@ -322,6 +322,35 @@ export default function DashboardPage({ user }: Props) {
                   key={link.to}
                   href={link.to}
                   className="rounded-xl border border-gray-200 bg-white p-4 hover:border-violet-300 hover:bg-violet-50 transition-colors group"
+                >
+                  <span className="text-2xl mb-2 block">{link.emoji}</span>
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-900">{link.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{link.desc}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* AI quick links */}
+          <div>
+            <h2 className="text-sm font-semibold text-violet-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI-Powered
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {[
+                { to: '/ai/device-search', label: 'Device Search', desc: 'Search in plain English', emoji: '🔎' },
+                { to: '/ai/policy-explain', label: 'Policy Explainer', desc: 'Understand any policy', emoji: '📋' },
+                { to: '/ai/remediation-script', label: 'Script Generator', desc: 'PowerShell in seconds', emoji: '⚡' },
+                { to: '/ai/compliance-gap', label: 'Compliance Gaps', desc: 'Find what\'s missing', emoji: '🛡️' },
+                { to: '/ai/group-cleanup', label: 'Cleanup Advisor', desc: 'Safe to delete?', emoji: '🧹' },
+              ].map(link => (
+                <a
+                  key={link.to}
+                  href={link.to}
+                  className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 hover:border-violet-400 hover:bg-violet-100 transition-colors group"
                 >
                   <span className="text-2xl mb-2 block">{link.emoji}</span>
                   <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-900">{link.label}</p>

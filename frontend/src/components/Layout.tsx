@@ -66,6 +66,54 @@ const navItems = [
   },
 ]
 
+const aiNavItems = [
+  {
+    to: '/ai/device-search',
+    label: 'Device Search',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/ai/policy-explain',
+    label: 'Policy Explainer',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/ai/remediation-script',
+    label: 'Script Generator',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+      </svg>
+    ),
+  },
+  {
+    to: '/ai/compliance-gap',
+    label: 'Compliance Gaps',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/ai/group-cleanup',
+    label: 'Cleanup Advisor',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    ),
+  },
+]
+
 export default function Layout({ user, onLogout, children }: LayoutProps) {
   const [showPermissions, setShowPermissions] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>([])
@@ -97,20 +145,43 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-700 to-purple-900">
-            <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-            </svg>
-          </div>
+          <img src="/logo.svg" alt="Intune AI Studio" className="h-8 w-8 rounded-lg" />
           <div>
-            <p className="text-sm font-semibold text-gray-900">Intune Toolbox</p>
-            <p className="text-xs text-gray-400">Admin Tools</p>
+            <p className="text-sm font-semibold text-gray-900">Intune AI Studio</p>
+            <p className="text-xs text-gray-400">AI-Powered Admin Tools</p>
           </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-violet-100 text-violet-900 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`
+              }
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+
+          {/* AI section divider */}
+          <div className="pt-4 pb-1 px-3">
+            <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest flex items-center gap-1.5">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI Tools
+            </p>
+          </div>
+
+          {aiNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
