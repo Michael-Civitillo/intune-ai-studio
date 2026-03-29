@@ -1,14 +1,20 @@
-import csv
 import io
-from typing import Optional
+import logging
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import auth
 import graph
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger(__name__)
 
 app = FastAPI(title="Intune Admin Toolbox API")
 
@@ -26,6 +32,11 @@ def require_token() -> str:
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return token
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
 
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
@@ -133,7 +144,7 @@ async def service_health():
 # ── Groups ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/groups/search")
-async def groups_search(q: str = Query(..., min_length=1)):
+async def groups_search(q: str = Query(..., min_length=1, max_length=256)):
     token = require_token()
     try:
         results = await graph.search_groups(token, q)
@@ -233,7 +244,7 @@ async def group_sync_stream(group_id: str):
 
 class BulkAddPayload(BaseModel):
     group_id: str
-    device_names: list[str]
+    device_names: list[str] = Field(..., max_length=500)
 
 
 @app.post("/api/devices/bulk-add")
@@ -241,6 +252,7 @@ async def devices_bulk_add(payload: BulkAddPayload):
     token = require_token()
     if not payload.device_names:
         raise HTTPException(status_code=400, detail="No device names provided")
+    log.info("Bulk add: %d devices → group %s", len(payload.device_names), payload.group_id)
 
     # Step 1: resolve names → object IDs
     name_to_id = await graph.resolve_device_names(token, payload.device_names)

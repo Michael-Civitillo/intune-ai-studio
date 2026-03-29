@@ -2,12 +2,24 @@ import asyncio
 import csv
 import io
 import json
+import logging
+import re
 from typing import Any, AsyncIterator, Optional
 
 import httpx
 
+log = logging.getLogger(__name__)
+
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 BETA_BASE = "https://graph.microsoft.com/beta"
+DEFAULT_TIMEOUT = 30.0
+
+_ODATA_UNSAFE = re.compile(r"['\\\x00-\x1f]")
+
+
+def _odata_escape(value: str) -> str:
+    """Escape a value for safe inclusion in an OData string literal."""
+    return _ODATA_UNSAFE.sub(lambda m: f"'{m.group()}" if m.group() == "'" else "", value)
 
 
 def _headers(token: str) -> dict:
@@ -121,16 +133,17 @@ async def get_service_health(token: str) -> dict:
 # ── Auth / User ──────────────────────────────────────────────────────────────
 
 async def get_me(token: str) -> dict:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         return await _get(client, token, f"{GRAPH_BASE}/me", {"$select": "displayName,userPrincipalName"})
 
 
 # ── Groups ───────────────────────────────────────────────────────────────────
 
 async def search_groups(token: str, query: str) -> list[dict]:
-    async with httpx.AsyncClient() as client:
+    safe_query = _odata_escape(query)
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         data = await _get(client, token, f"{GRAPH_BASE}/groups", {
-            "$filter": f"startswith(displayName,'{query}')",
+            "$filter": f"startswith(displayName,'{safe_query}')",
             "$select": "id,displayName,description",
             "$top": "20",
         })
@@ -138,14 +151,14 @@ async def search_groups(token: str, query: str) -> list[dict]:
 
 
 async def get_group(token: str, group_id: str) -> dict:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         return await _get(client, token, f"{GRAPH_BASE}/groups/{group_id}", {
             "$select": "id,displayName,description,membershipRule,groupTypes",
         })
 
 
 async def get_group_members(token: str, group_id: str) -> list[dict]:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         members = await _get_paged(client, token, f"{GRAPH_BASE}/groups/{group_id}/members", {
             "$select": "id,displayName,deviceId,operatingSystem,operatingSystemVersion",
             "$top": "999",
@@ -168,11 +181,11 @@ async def resolve_device_names(token: str, names: list[str]) -> dict[str, Option
             {
                 "id": str(i),
                 "method": "GET",
-                "url": f"/devices?$filter=displayName eq '{name}'&$select=id,displayName&$top=1",
+                "url": f"/devices?$filter=displayName eq '{_odata_escape(name)}'&$select=id,displayName&$top=1",
             }
             for i, name in enumerate(batch_names)
         ]
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
             r = await client.post(
                 f"{GRAPH_BASE}/$batch",
                 headers=_headers(token),
@@ -198,19 +211,16 @@ async def add_device_to_group(token: str, group_id: str, device_object_id: str) 
     """Returns {"status": "added" | "already_member" | "error", "message": ...}"""
     url = f"{GRAPH_BASE}/groups/{group_id}/members/$ref"
     body = {"@odata.id": f"{GRAPH_BASE}/directoryObjects/{device_object_id}"}
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         r = await client.post(url, headers=_headers(token), json=body)
     if r.status_code == 204:
         return {"status": "added"}
     if r.status_code == 400:
         err = r.json().get("error", {})
-        if "already exists" in err.get("message", "").lower() or err.get("code") == "Request_BadRequest":
-            # Check if it's truly a duplicate
-            if "already" in err.get("message", "").lower():
-                return {"status": "already_member"}
-    if r.status_code == 400:
-        err_msg = r.json().get("error", {}).get("message", r.text)
-        return {"status": "error", "message": err_msg}
+        msg = err.get("message", "")
+        if "already" in msg.lower():
+            return {"status": "already_member"}
+        return {"status": "error", "message": msg or r.text}
     try:
         r.raise_for_status()
     except httpx.HTTPStatusError as e:
