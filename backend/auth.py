@@ -44,7 +44,14 @@ def load_config() -> Optional[dict]:
 
 
 def save_config(client_id: str, tenant_id: str) -> None:
-    CONFIG_PATH.write_text(json.dumps({"client_id": client_id, "tenant_id": tenant_id}, indent=2))
+    # Merge into any existing config so AI settings (ai_provider/ai_api_key/…)
+    # written by ai.save_ai_config are preserved across an Entra re-save.
+    cfg = {}
+    if CONFIG_PATH.exists():
+        cfg = json.loads(CONFIG_PATH.read_text())
+    cfg["client_id"] = client_id
+    cfg["tenant_id"] = tenant_id
+    CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
 
 
 def _get_app(client_id: str, tenant_id: str) -> msal.PublicClientApplication:
