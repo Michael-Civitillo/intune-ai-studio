@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 import ai
 import auth
@@ -305,6 +305,15 @@ class AISetupPayload(BaseModel):
     api_key: str
     endpoint: str = ""
     model: str = ""
+
+    @field_validator("provider")
+    @classmethod
+    def _known_provider(cls, v: str) -> str:
+        if v not in ai.PROVIDER_LABELS:
+            raise ValueError(
+                f"Unknown provider '{v}'. Choose one of: {', '.join(ai.PROVIDER_LABELS)}"
+            )
+        return v
 
 
 @app.get("/api/ai/status")

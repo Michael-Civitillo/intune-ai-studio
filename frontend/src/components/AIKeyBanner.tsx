@@ -157,7 +157,7 @@ export default function AIKeyBanner({ children }: Props) {
         <a href={info.keyUrl} target="_blank" rel="noreferrer" className="underline">
           {new URL(info.keyUrl).hostname}
         </a>
-        . Your key is stored locally and never leaves this machine.
+        . Your key is stored on the local server and sent only to your selected AI provider.
       </p>
     </div>
   )

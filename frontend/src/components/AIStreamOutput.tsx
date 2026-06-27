@@ -23,6 +23,13 @@ export default function AIStreamOutput({ url, body, onDone, statusMessage }: Pro
     const controller = new AbortController()
 
     async function stream() {
+      let finished = false
+      const finish = () => {
+        if (finished) return
+        finished = true
+        setStreaming(false)
+        onDone?.()
+      }
       try {
         const res = await fetch(url, {
           method: 'POST',
@@ -65,9 +72,9 @@ export default function AIStreamOutput({ url, body, onDone, statusMessage }: Pro
               } else if (event.type === 'status') {
                 setStatus(event.message)
               } else if (event.type === 'done') {
-                setStreaming(false)
-                onDone?.()
+                finish()
               } else if (event.type === 'error') {
+                finished = true
                 setError(event.message)
                 setStreaming(false)
               }
@@ -76,8 +83,7 @@ export default function AIStreamOutput({ url, body, onDone, statusMessage }: Pro
             }
           }
         }
-        setStreaming(false)
-        onDone?.()
+        finish()
       } catch (e: unknown) {
         if ((e as Error).name !== 'AbortError') {
           setError((e as Error).message || 'Stream failed')
@@ -86,8 +92,14 @@ export default function AIStreamOutput({ url, body, onDone, statusMessage }: Pro
       }
     }
 
-    stream()
-    return () => controller.abort()
+    // Defer the request to the next tick so React 18 StrictMode's
+    // mount→unmount→mount cycle aborts this throwaway run before it fires a
+    // (billable) request — only the surviving mount actually POSTs.
+    const timer = setTimeout(stream, 0)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll during streaming

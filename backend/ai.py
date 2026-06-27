@@ -17,6 +17,7 @@ Provides streaming and non-streaming AI features:
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -25,11 +26,11 @@ import graph
 log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
-MAX_TOKENS = 4096
+MAX_TOKENS = 8192
 
 # Default models per provider
 DEFAULT_MODELS = {
-    "anthropic": "claude-sonnet-4-20250514",
+    "anthropic": "claude-sonnet-4-6",
     "openai": "gpt-4o",
     "azure": "gpt-4o",
     "gemini": "gemini-2.5-flash",
@@ -58,15 +59,18 @@ def _load_ai_config() -> dict:
     return {"provider": "", "api_key": "", "endpoint": "", "model": ""}
 
 
-def get_ai_status() -> dict:
-    """Check whether AI is configured and which provider is active."""
+def _resolve_provider() -> dict:
+    """Resolve the active provider config from config.json, then the legacy
+    single-key field, then provider env vars."""
     cfg = _load_ai_config()
+
     # Fall back to legacy anthropic_api_key field
     if not cfg["api_key"] and CONFIG_PATH.exists():
         full_cfg = json.loads(CONFIG_PATH.read_text())
         if full_cfg.get("anthropic_api_key"):
             cfg["provider"] = "anthropic"
             cfg["api_key"] = full_cfg["anthropic_api_key"]
+
     # Fall back to env vars
     if not cfg["api_key"]:
         for env_key, provider in [
@@ -80,6 +84,18 @@ def get_ai_status() -> dict:
                 cfg["provider"] = provider
                 cfg["api_key"] = val
                 break
+
+    # The Azure endpoint may live in the environment even when the key is in
+    # config.json, so consult it whenever azure is active without an endpoint.
+    if cfg["provider"] == "azure" and not cfg["endpoint"]:
+        cfg["endpoint"] = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+
+    return cfg
+
+
+def get_ai_status() -> dict:
+    """Check whether AI is configured and which provider is active."""
+    cfg = _resolve_provider()
     return {
         "configured": bool(cfg["provider"] and cfg["api_key"]),
         "provider": cfg["provider"],
@@ -107,29 +123,8 @@ def _sse(payload: dict) -> str:
 # ── Provider Abstraction ─────────────────────────────────────────────────────
 
 def _get_provider_config() -> dict:
-    """Get the active provider config, with fallbacks."""
-    cfg = _load_ai_config()
-    # Legacy fallback
-    if not cfg["api_key"] and CONFIG_PATH.exists():
-        full_cfg = json.loads(CONFIG_PATH.read_text())
-        if full_cfg.get("anthropic_api_key"):
-            cfg["provider"] = "anthropic"
-            cfg["api_key"] = full_cfg["anthropic_api_key"]
-    # Env fallback
-    if not cfg["api_key"]:
-        for env_key, provider in [
-            ("ANTHROPIC_API_KEY", "anthropic"),
-            ("OPENAI_API_KEY", "openai"),
-            ("AZURE_OPENAI_API_KEY", "azure"),
-            ("GEMINI_API_KEY", "gemini"),
-        ]:
-            val = os.environ.get(env_key)
-            if val:
-                cfg["provider"] = provider
-                cfg["api_key"] = val
-                if provider == "azure":
-                    cfg["endpoint"] = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-                break
+    """Get the active provider config, raising if none is configured."""
+    cfg = _resolve_provider()
     if not cfg["provider"] or not cfg["api_key"]:
         raise RuntimeError("No AI provider configured. Set one up in the AI Tools settings.")
     cfg["model"] = cfg["model"] or DEFAULT_MODELS.get(cfg["provider"], "")
@@ -149,7 +144,8 @@ async def _create_message(system: str, user_content: str) -> str:
             system=system,
             messages=[{"role": "user", "content": user_content}],
         )
-        return response.content[0].text
+        text_blocks = [b.text for b in response.content if getattr(b, "type", None) == "text"]
+        return "".join(text_blocks)
 
     elif provider in ("openai", "azure"):
         import openai
@@ -188,10 +184,10 @@ async def _create_message(system: str, user_content: str) -> str:
 
 async def _stream_message(system: str, user_content: str) -> AsyncIterator[str]:
     """Streaming message → yields SSE token events."""
-    cfg = _get_provider_config()
-    provider = cfg["provider"]
-
     try:
+        cfg = _get_provider_config()
+        provider = cfg["provider"]
+
         if provider == "anthropic":
             import anthropic
             client = anthropic.AsyncAnthropic(api_key=cfg["api_key"])
@@ -303,9 +299,11 @@ async def device_search(query: str, token: str) -> dict:
     )
 
     raw = raw.strip()
-    # Some providers wrap JSON in markdown code fences
+    # Some providers wrap JSON in markdown code fences (with or without a
+    # language tag, on one line or several) — strip them before parsing.
     if raw.startswith("```"):
-        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        raw = re.sub(r"^```[a-zA-Z0-9]*\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw).strip()
 
     try:
         parsed = json.loads(raw)
